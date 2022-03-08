@@ -1,5 +1,5 @@
-from clustering_1 import find_K, find_EM, find_PCA
-from mnist_data_prep import get_mnist_data_labels_neural
+from clustering_1 import find_K, find_EM, find_PCA, find_K_elbow
+from mnist_data_prep import get_mnist_data_labels
 from census_data_prep import get_census_data_and_labels
 import argparse
 
@@ -7,7 +7,7 @@ import argparse
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Clustering Runner")
     parser.add_argument("dataset", choices=["MNIST", "Census"], help="The dataset: MNIST Census")
-    parser.add_argument("task", choices=["kmeans", "em", "pca"], help="The task : kmeans, em, pca")
+    parser.add_argument("task", choices=["kmeans", "em", "pca", "elbow"], help="The task : kmeans, em, pca, elbow")
     parser.add_argument("-variance_threshold", type=float, default=0.85, help="Variance Threshold used for PAC")
     parser.add_argument("-max_k", type=int, default=10, help="Maximum K for K means or EM componenents")
 
@@ -17,12 +17,10 @@ if __name__ == "__main__":
         print("Loading MNIST Data")
         (
             train_data,
-            train_one_hot_labels,
             train_labels,
             test_data,
-            test_one_hot_labels,
             test_labels,
-        ) = get_mnist_data_labels_neural()
+        ) = get_mnist_data_labels(scale_data=True)
     else:
         print("Loading Census Data")
         (
@@ -47,3 +45,11 @@ if __name__ == "__main__":
 
     elif args.task == "em":
         find_EM(train_data, args.max_k)
+
+    elif args.task == "elbow":
+        find_K_elbow(args.dataset, train_data, args.max_k)
+    else:
+        print(f"Unsupported Task of {args.task}")
+
+    # Beep when done
+    print("\a")

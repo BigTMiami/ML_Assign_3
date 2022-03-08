@@ -3,7 +3,7 @@ from census_data_prep import get_census_data_and_labels
 from sklearn.cluster import KMeans
 from sklearn import mixture
 from sklearn.decomposition import PCA
-from yellowbrick.cluster import SilhouetteVisualizer
+from yellowbrick.cluster import SilhouetteVisualizer, KElbowVisualizer
 from matplotlib import pyplot as plt
 from time import time
 from charting import chart_pca_scree
@@ -31,6 +31,16 @@ def find_K(dataset_name, X, max_k, start_k=2):
     print(scores)
 
     return K_list, scores
+
+
+def find_K_elbow(dataset_name, X, max_k, start_k=2):
+    print(f"Starting Elbow for {dataset_name}, ({start_k},{max_k})")
+    model = KMeans()
+    visualizer = KElbowVisualizer(model, k=(start_k, max_k))
+    visualizer.fit(X)
+    visualizer.show(outpath=f"{figure_directory}{dataset_name}_elbow_max_{max_k}_best_{visualizer.elbow_value_}.png")
+    print(f"Best k:{visualizer.elbow_value_}")
+    return
 
 
 def find_EM(X, max_k, start_k=2):
