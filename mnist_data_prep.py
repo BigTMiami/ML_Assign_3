@@ -2,6 +2,7 @@ import numpy as np
 import idx2numpy
 from PIL import Image
 import torch as t
+from sklearn.preprocessing import StandardScaler
 
 # https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
 
@@ -18,8 +19,9 @@ def get_mnist_data_labels(one_hot_labels=False, scale_data=False, as_tensor=Fals
     train_images_flattened = train_images.reshape(tid[0], tid[1] * tid[2])
     if scale_data:
         train_images_flattened = train_images_flattened / 255.0
-    # image = Image.fromarray(train_images[12313])
-    # image.show()
+        # scaler = StandardScaler()
+        # scaler.fit(train_images_flattened)
+        # train_images_flattened = scaler.transform(train_images_flattened)
 
     train_label_file = "data/mnist/train-labels.idx1-ubyte"
     train_labels = idx2numpy.convert_from_file(train_label_file)
@@ -32,6 +34,9 @@ def get_mnist_data_labels(one_hot_labels=False, scale_data=False, as_tensor=Fals
     test_images_flattened = test_images.reshape(tidt[0], tidt[1] * tidt[2])
     if scale_data:
         test_images_flattened = test_images_flattened / 255.0
+        # scaler = StandardScaler()
+        # scaler.fit(test_images_flattened)
+        # test_images_flattened = scaler.transform(test_images_flattened)
 
     test_label_file = "data/mnist/t10k-labels.idx1-ubyte"
     test_labels = idx2numpy.convert_from_file(test_label_file)
@@ -45,49 +50,3 @@ def get_mnist_data_labels(one_hot_labels=False, scale_data=False, as_tensor=Fals
         test_labels = t.tensor(test_labels.astype(np.float32))
 
     return train_images_flattened, train_labels, test_images_flattened, test_labels
-
-
-def get_mnist_data_labels_neural(flatten_images=True):
-    train_image_file = "data/mnist/train-images.idx3-ubyte"
-    train_images = idx2numpy.convert_from_file(train_image_file)
-    tid = train_images.shape
-    if flatten_images:
-        train_images = train_images.reshape(tid[0], tid[1] * tid[2])
-
-    train_images = train_images / 255.0
-
-    train_label_file = "data/mnist/train-labels.idx1-ubyte"
-    train_labels = idx2numpy.convert_from_file(train_label_file)
-    train_one_hot_labels = int_to_one_hot(train_labels)
-
-    test_image_file = "data/mnist/t10k-images.idx3-ubyte"
-    test_images = idx2numpy.convert_from_file(test_image_file)
-    tidt = test_images.shape
-    if flatten_images:
-        test_images = test_images.reshape(tidt[0], tidt[1] * tidt[2])
-
-    test_images = test_images / 255.0
-
-    test_label_file = "data/mnist/t10k-labels.idx1-ubyte"
-    test_labels = idx2numpy.convert_from_file(test_label_file)
-    test_one_hot_labels = int_to_one_hot(test_labels)
-
-    train_images = t.tensor(train_images.astype(np.float32))
-    if not flatten_images:
-        train_images = train_images[:, None, :, :]
-    train_one_hot_labels = t.tensor(train_one_hot_labels.astype(np.float32))
-    train_labels = t.tensor(train_labels.astype(np.float32))
-    test_images = t.tensor(test_images.astype(np.float32))
-    if not flatten_images:
-        test_images = test_images[:, None, :, :]
-    test_one_hot_labels = t.tensor(test_one_hot_labels.astype(np.float32))
-    test_labels = t.tensor(test_labels.astype(np.float32))
-
-    return (
-        train_images,
-        train_one_hot_labels,
-        train_labels,
-        test_images,
-        test_one_hot_labels,
-        test_labels,
-    )

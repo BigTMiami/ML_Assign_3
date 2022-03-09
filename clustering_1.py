@@ -1,49 +1,67 @@
-from mnist_data_prep import get_mnist_data_labels_neural
-from census_data_prep import get_census_data_and_labels
 from sklearn.cluster import KMeans
 from sklearn import mixture
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, FastICA
 from yellowbrick.cluster import SilhouetteVisualizer, KElbowVisualizer
 from matplotlib import pyplot as plt
 from time import time
-from charting import chart_pca_scree
+from charting import chart_pca_scree, line_chart, clean_string, chart_bic_scores
+import json
 
 SEED = 1
 figure_directory = "Document/Figures/working/"
+results_file = "clustering_results.py"
 
 
-def find_K(dataset_name, X, max_k, start_k=2):
-    scores = []
-    K_list = list(range(start_k, max_k))
-    fig, ax = plt.subplots()
-    for K in K_list:
-        fig.suptitle(f"{dataset_name} K Means Silhouette", fontsize=16)
-        model = KMeans(K, random_state=SEED)
-        visualizer = SilhouetteVisualizer(model, colors="yellowbrick", ax=ax)
-        visualizer.fit(X)
-        visualizer.show(outpath=f"{figure_directory}{dataset_name}_silhouette_K_{K}.png")
-        print(f"K:{K:2}  Silhouette Score:{visualizer.silhouette_score_}")
-        scores.append(visualizer.silhouette_score_)
-        plt.clf()
-
-    plt.close()
-    print(K_list)
-    print(scores)
-
-    return K_list, scores
+def save_results(variable_name, results):
+    with open(results_file, "a") as f:
+        f.write("\n")
+        f.write(f"{clean_string(variable_name)} = {json.dumps(results)}")
+        f.write("\n")
 
 
 def find_K_elbow(dataset_name, X, max_k, start_k=2):
+    clean_dataset_name = clean_string(dataset_name)
     print(f"Starting Elbow for {dataset_name}, ({start_k},{max_k})")
     model = KMeans()
     visualizer = KElbowVisualizer(model, k=(start_k, max_k))
     visualizer.fit(X)
-    visualizer.show(outpath=f"{figure_directory}{dataset_name}_elbow_max_{max_k}_best_{visualizer.elbow_value_}.png")
+    visualizer.show(
+        outpath=f"{figure_directory}{clean_dataset_name}_elbow_max_{max_k}_best_{visualizer.elbow_value_}.png"
+    )
     print(f"Best k:{visualizer.elbow_value_}")
     return
 
 
-def find_EM(X, max_k, start_k=2):
+def find_K(dataset_name, X, max_k, start_k=2):
+    clean_dataset_name = clean_string(dataset_name)
+    scores = []
+    K_list = list(range(start_k, max_k))
+    for K in K_list:
+        fig, ax = plt.subplots()
+        fig.suptitle(f"{dataset_name} K Means Silhouette", fontsize=16)
+        model = KMeans(K, random_state=SEED)
+        visualizer = SilhouetteVisualizer(model, colors="yellowbrick", ax=ax)
+        visualizer.fit(X)
+        visualizer.show(outpath=f"{figure_directory}{clean_dataset_name}_silhouette_K_{K}.png")
+        print(f"K:{K:2}  Silhouette Score:{visualizer.silhouette_score_}")
+        scores.append(visualizer.silhouette_score_)
+        plt.close()
+
+    line_chart(K_list, "K", scores, "Sillhoette Score", dataset_name, "K Means Cluster Scores")
+
+    print(K_list)
+    print(scores)
+
+    variable_name = f"{clean_dataset_name}_silhoette_scores"
+    results = {"K_list": K_list, "scores": scores}
+    save_results(variable_name, results)
+
+    find_K_elbow(dataset_name, X, max_k, start_k=start_k)
+
+    return K_list, scores
+
+
+def find_EM(dataset_name, X, max_k, start_k=2):
     start_time = time()
     bic_scores = {
         "spherical": {"k": [], "bic_score": []},
@@ -62,12 +80,20 @@ def find_EM(X, max_k, start_k=2):
             print(f"    {covariance_type:>9}:{score:10.0f}")
 
     end_time = time()
-    print(bic_scores)
     print(f"Time:{end_time-start_time:6.2f} seconds")
+    print(bic_scores)
+
+    chart_bic_scores(bic_scores, f"{dataset_name} Data", "Expecation Maximization")
+
+    clean_dataset_name = clean_string(dataset_name)
+    variable_name = f"{clean_dataset_name}_silhoette_scores"
+    results = {"bic_scores": bic_scores}
+    save_results(variable_name, results)
+
     return bic_scores
 
 
-def find_PCA(train_data, test_data, sup_title, variance_threshold=0.99):
+def find_PCA(train_data, test_data, sup_title, variance_threshold):
     start_time = time()
     pca = PCA(n_components=variance_threshold)
     print("Fitting Data")
@@ -79,8 +105,55 @@ def find_PCA(train_data, test_data, sup_title, variance_threshold=0.99):
     print(f"    Time:{time()-start_time:.0f} seconds")
     start_time = time()
     print("Transforming Data")
-    train_data = pca.transform(train_data)
-    test_data = pca.transform(test_data)
+    train_reduced_data = pca.transform(train_data)
+    test_reduced_data = pca.transform(test_data)
     print(f"    Time:{time()-start_time:.0f} seconds")
     print(f"Total components:{pca.n_components_} for {variance_threshold*100}% variance")
-    return train_data, test_data
+    return train_reduced_data, test_reduced_data
+
+
+def find_K_means_from_PCA(dataset_name, train_data, test_data, variance_threshold, max_k):
+    print(f"Finding PCA")
+    sup_title = f"PCA {dataset_name} Data"
+    reduced_train_data, reduced_test_data = find_PCA(
+        train_data, test_data, sup_title, variance_threshold=variance_threshold
+    )
+
+    print("Finding K Means on reduced dataset using Silhouette")
+    reduced_dataset_name = f"{dataset_name} Reduced PCA ({100*variance_threshold}% EV)"
+    find_K(reduced_dataset_name, reduced_train_data, max_k)
+
+    print("Finding K Means on reduced dataset using Elbow")
+    find_K_elbow(reduced_dataset_name, reduced_train_data, max_k)
+
+
+def find_em_from_PCA(dataset_name, train_data, test_data, variance_threshold, max_k):
+    print(f"Finding PCA")
+    sup_title = f"PCA {dataset_name} Data"
+    reduced_train_data, reduced_test_data = find_PCA(
+        train_data, test_data, sup_title, variance_threshold=variance_threshold
+    )
+    reduced_dataset_name = f"{dataset_name} Reduced PCA ({100*variance_threshold}% EV)"
+
+    print("Finding EM on reduced dataset")
+    find_EM(reduced_dataset_name, reduced_train_data, max_k)
+
+
+def ICA_review(dataset_name, train_data, max_k):
+    print(f"Finding ICA")
+    print("================================================")
+    ica = FastICA()
+    reduced_train_data = ica.fit_transform(train_data)
+
+    print("Finding K Means on ICA dataset using Silhouette")
+    print("================================================")
+    reduced_dataset_name = f"{dataset_name} ICA)"
+    find_K(reduced_dataset_name, reduced_train_data, max_k)
+
+    print("Finding K Means on ICA dataset using Elbow")
+    print("================================================")
+    find_K_elbow(reduced_dataset_name, reduced_train_data, max_k)
+
+    print("Finding EM on ICA dataset")
+    print("================================================")
+    find_EM(reduced_dataset_name, reduced_train_data, max_k)

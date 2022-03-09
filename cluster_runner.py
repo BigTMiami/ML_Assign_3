@@ -1,4 +1,4 @@
-from clustering_1 import find_K, find_EM, find_PCA, find_K_elbow
+from clustering_1 import find_K, find_EM, find_PCA, find_K_elbow, find_K_means_from_PCA, find_em_from_PCA, ICA_review
 from mnist_data_prep import get_mnist_data_labels
 from census_data_prep import get_census_data_and_labels
 import argparse
@@ -7,7 +7,11 @@ import argparse
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Clustering Runner")
     parser.add_argument("dataset", choices=["MNIST", "Census"], help="The dataset: MNIST Census")
-    parser.add_argument("task", choices=["kmeans", "em", "pca", "elbow"], help="The task : kmeans, em, pca, elbow")
+    parser.add_argument(
+        "task",
+        choices=["kmeans", "em", "pca", "elbow", "pca_kmeans", "pca_em", "ica_review"],
+        help="The task : kmeans, em, pca, elbow, pca_kmeans, pca_em, ica_review",
+    )
     parser.add_argument("-variance_threshold", type=float, default=0.85, help="Variance Threshold used for PAC")
     parser.add_argument("-max_k", type=int, default=10, help="Maximum K for K means or EM componenents")
 
@@ -35,16 +39,21 @@ if __name__ == "__main__":
             data_classes,
         ) = get_census_data_and_labels()
 
-    if args.task == "pca":
+    if args.task == "ica_review":
+        ICA_review(args.dataset, train_data, args.max_k)
+    elif args.task == "pca_em":
+        find_em_from_PCA(args.dataset, train_data, test_data, args.variance_threshold, args.max_k)
+    elif args.task == "pca_kmeans":
+        find_K_means_from_PCA(args.dataset, train_data, test_data, args.variance_threshold, args.max_k)
+    elif args.task == "pca":
         reduced_train_data, reduced_test_data = find_PCA(
-            train_data, test_data, f"PCA {args.dataset} Data", variance_threshold=args.variance_threshold
+            train_data, test_data, f"PCA {args.dataset} Data", args.variance_threshold
         )
-
     elif args.task == "kmeans":
         find_K(args.dataset, train_data, args.max_k)
 
     elif args.task == "em":
-        find_EM(train_data, args.max_k)
+        find_EM(args.dataset, train_data, args.max_k)
 
     elif args.task == "elbow":
         find_K_elbow(args.dataset, train_data, args.max_k)

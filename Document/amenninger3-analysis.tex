@@ -221,6 +221,32 @@ Expectation Maximization (EM) creates a probabilistic model for each point belon
 \section{Dimensionality Reduction}
 
 \subsection{Principal Component Analysis (PCA)}
+Principal Component Analysis maximizes variance along constructed dimensions through successive iterations, with each iteration explaining smaller amounts of variance.  Using this model, new constructed features can capture variance to an arbitrary threshold, potentially representing the original dataset with fewer features.  
+
+\begin{figure}[!htb]
+	\centering
+		\begin{subfigure} [b]{.25\textwidth}
+			\centering
+			\includegraphics[width=1.5in, height=1.5in]{figures/PCA_Census_Data_Scree_vt_85.png}
+			\caption{Census}
+			\label{fig:pca_census}
+		\end{subfigure}%
+		\begin{subfigure}[b]  {.25\textwidth}
+			\includegraphics[width=1.5in, height=1.5in]{figures/PCA_MNIST_Data_Scree_vt_85.png}
+			\caption{MNIST}
+			\label{fig:pca_mnist}
+		\end{subfigure}
+		\caption{PCA Review:  PCA analysis was run to meet a threshold of 85\% of variance explained.  The Census data only reduced the original feature count by about half, while the MNIST data was able to reduce the features count by over 90\%.}
+		\label{fig:pca}
+\end{figure}
+
+\textbf{Figure \ref{fig:pca}} shows the PCA review, with the goal of explaining 85\% of the original variance. Figure \ref{fig:pca_census}  shows the PCA review for the Census data.  This needed 21 new features, which reduces the number of features by about half.  Figure \ref{fig:pca_mnist} shows the MNIST PCA review, which needed 58 new features.  This is a very significant reduction from 784, reducing the feature count by almost 94\%.  I think this much greater reduction is a function of the necessary 2d relationships in digit images.  Each digit will have strong likelihood to have pixels next to each other on or off, meaning they are ripe for a more compact representation.  In the case of the Census data, the relationship between features is much less structured, therefore requiring proportionally more information from the original features.  Even the 50\% reduction of features is very significant, given the exponential nature of the state space and date requirements with increasing feature count.
+
+Scaling the MNIST data seems to make PCA perform much worse than if I just divide the raw data by 255 to set values between 0 and 1.  In looking into this, I see many examples of using PCA to perform image compression, where the data is not scaled or normalized.    This makes sense to me because the columns \ features are already scaled to each other for image data and performing the column wise rescaling throws them out of alignment.
+
+\subsection{Independent Component Analysis (ICA)}
+
+sklearn FastICA used defaults
 
 \section{References}
 \begin{tabular}{l p{2.75in}}

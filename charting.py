@@ -4,16 +4,23 @@ import seaborn as sns
 import numpy as np
 
 
+def clean_string(in_string):
+    out_string = in_string.replace(" ", "_")
+    out_string = out_string.replace(":", "_")
+    out_string = out_string.replace(",", "_")
+    out_string = out_string.replace("=", "_")
+    out_string = out_string.replace(".", "_")
+    out_string = out_string.replace("[", "")
+    out_string = out_string.replace("]", "")
+    out_string = out_string.replace("(", "")
+    out_string = out_string.replace(")", "")
+    out_string = out_string.replace("'", "")
+    out_string = out_string.replace("%", "")
+    return out_string
+
+
 def title_to_filename(title, location="Document/figures/working", file_ending="png"):
-    safe_title = title.replace(" ", "_")
-    safe_title = safe_title.replace(":", "_")
-    safe_title = safe_title.replace(",", "_")
-    safe_title = safe_title.replace("=", "_")
-    safe_title = safe_title.replace("[", "")
-    safe_title = safe_title.replace("]", "")
-    safe_title = safe_title.replace("(", "")
-    safe_title = safe_title.replace(")", "")
-    safe_title = safe_title.replace("'", "")
+    safe_title = clean_string(title)
     return f"{location}/{safe_title}.{file_ending}"
 
 
@@ -38,7 +45,8 @@ def line_chart(
     ax.set_ylabel(y_label)
     ax.set_xlabel(x_label)
     sns.lineplot(x=x, y=y, ax=ax)
-    save_to_file(plt, sup_title + " " + title)
+    filename = clean_string(sup_title + " " + title)
+    save_to_file(plt, filename)
 
 
 def chart_bic_scores(
