@@ -11,6 +11,7 @@
 
 % ADJUSTED BY AFM ----------------------------------------------------------
 \usepackage{amsmath} % ENTERED BY AFM
+\usepackage{subcaption}
 
 \urlstyle{rm} % DO NOT CHANGE THIS
 \def\UrlFont{\rm}  % DO NOT CHANGE THIS
@@ -126,38 +127,100 @@ For this assignment, the core python library used was sklearn [3], which has man
 
 
 \section{Clustering}
+
 \subsection{K Means}
-K Means creates K clusters based on the distance of instances to cluster centers.  A key question is what is the optimal number of clusters.  An Elbow Plot looks at the intra distance within clusters at different K, and then picks the K where intra-distance change slows down, or the "elbow" of the plot.  A silhouette plot charts the  intra cluster distance and references it vs the next nearest cluster intra cluster distance.  This produces a chart that can provide visual insight.  Both methods were used in choosing an optimal K.
+K Means creates K clusters based on the distance of instances to cluster centers.  A key question is what is the optimal number of clusters.  An Elbow Plot looks at the intra distance within clusters at different K, and then picks the K where intra-distance change slows down, or the "elbow" of the plot.  A silhouette plot charts the  intra cluster distance and references it vs the next nearest cluster intra cluster distance which can help show where instances may want to be in a different cluster.   For a given K, a silhouette chart can provide visual insight for qualitative review.  Both methods were used in choosing an optimal K. sklearn was used for KMeans clustering and yellowbrick was used for visualization.
 
 \begin{figure}[!htb]
-\centering
-\includegraphics[width=2.75in, height=2.75in]{figures/Census_elbow_max_30_best_13.png}
-\caption{K Means Census Elbow:  . }
-\label{fig:kmeans_census_elbow}
+	\centering
+		\begin{subfigure} [b]{.25\textwidth}
+			\centering
+			\includegraphics[width=1.5in, height=1.5in]{figures/Census_elbow_max_30_best_13.png}
+			\caption{Elbow}
+			\label{fig:kmeans_census_elbow}
+		\end{subfigure}%
+		\begin{subfigure}[b]  {.25\textwidth}
+			\includegraphics[width=1.5in, height=1.5in]{figures/K_Means_Cluster_Scores_Census_Data.png}
+			\caption{Silhouette Scores}
+			\label{fig:kmeans_census_silhouette}
+		\end{subfigure}
+		\newline
+		\begin{subfigure} [b]{.25\textwidth}
+			\centering
+			\includegraphics[width=1.5in, height=1.5in]{figures/Census_silhouette_K_13.png}
+			\caption{K=13 Silhouette}
+			\label{fig:kmeans_census_silhouette_13}
+		\end{subfigure}%
+		\begin{subfigure}[b]  {.25\textwidth}
+			\includegraphics[width=1.5in, height=1.5in]{figures/Census_silhouette_K_22.png}
+			\caption{K=22 Silhouette}
+			\label{fig:kmeans_census_silhouette_22}
+		\end{subfigure}		
+		\caption{Census K Means Review}
+		\label{fig:kmeans_census_cluster}
 \end{figure}
 
-\textbf{Figure \ref{fig:kmeans_census_elbow}} shows the elbow chart score
-
+\textbf{Figure \ref{fig:kmeans_census_cluster}} shows the Kmeans clustering review for the Census data.  Figure \ref{fig:kmeans_census_elbow} shows the elbow plot, which indicates that 13 is the optimal selection.  However, the chart is bumpy, which makes it a bit trickier to use.  Figure \ref{fig:kmeans_census_silhouette} shows the silhouette scores, where K=22 shows the highest score.  For silhouette scores, reference to the individual charts is also useful, as we look to have balanced clusters that meet the score average.  Figures  \ref{fig:kmeans_census_silhouette_13}  and \ref{fig:kmeans_census_silhouette_22} show K=13 and 22 respectively. Neither is a particularly clean silhouette, which is perhaps related to the bumpiness of the elbow chart.  I would select K=13 for the optimal cluster size.
 
 \begin{figure}[!htb]
-\centering
-\includegraphics[width=2.75in, height=2.75in]{figures/K_Means_Cluster_Scores_Census_Data.png}
-\caption{K Means Census Data Silhouette Scores:  . }
-\label{fig:kmeans_census_silhouette}
+	\centering
+		\begin{subfigure} [b]{.25\textwidth}
+			\centering
+			\includegraphics[width=1.5in, height=1.5in]{figures/MNIST_elbow_max_25_best_9.png}
+			\caption{Elbow}
+			\label{fig:kmeans_mnist_elbow}
+		\end{subfigure}%
+		\begin{subfigure}[b]  {.25\textwidth}
+			\includegraphics[width=1.5in, height=1.5in]{figures/K_Means_Cluster_Scores_MNIST_Data.png}
+			\caption{Silhouette Scores}
+			\label{fig:kmeans_mnist_silhouette}
+		\end{subfigure}
+		\newline
+		\begin{subfigure} [b]{.25\textwidth}
+			\centering
+			\includegraphics[width=1.5in, height=1.5in]{figures/MNIST_silhouette_K_8.png}
+			\caption{K=8 Silhouette}
+			\label{fig:kmeans_mnist_silhouette_8}
+		\end{subfigure}%
+		\begin{subfigure} [b]{.25\textwidth}
+			\centering
+			\includegraphics[width=1.5in, height=1.5in]{figures/MNIST_silhouette_K_9.png}
+			\caption{K=9 Silhouette}
+			\label{fig:kmeans_mnist_silhouette_9}
+		\end{subfigure}	
+		\caption{MNIST K Means Review}
+		\label{fig:kmeans_mnist_cluster}
 \end{figure}
 
- \textbf{Figure \ref{fig:kmeans_census_silhouette}} shows the silhoette score
- 
- \begin{figure}[!htb]
-\centering
-\includegraphics[width=2.75in, height=2.75in]{figures/Census_silhouette_K_22.png}
-\caption{K Means Census Best Silhouette:  . }
-\label{fig:kmeans_census_silhouette_best}
+\textbf{Figure \ref{fig:kmeans_mnist_cluster}} shows the Kmeans clustering review for the MNIST data.  Figure \ref{fig:kmeans_mnist_elbow} shows the elbow plot, which indicates that 9 is the optimal selection.  This chart is much smoother than the Census elbow chart, making it more straight forward to interpret.  Figure \ref{fig:kmeans_mnist_silhouette} shows the silhouette scores, where K=8 shows the highest score.  Figures  \ref{fig:kmeans_mnist_silhouette_8}  and \ref{fig:kmeans_mnist_silhouette_8} show the individual silhouette charts for K=8 and 9 respectively.  These are much cleaner silhouette charts than the Census data and more interpretable because of the lower cluster sizes.  The elbow chart at K=8 is pretty close to K=9, but is much better for the silhouette score, so I would choose K= 8 as the optimal cluster size.
+
+Overall, the MNIST data is more amendable to clustering as it is equally scaled to begin with with the range of 0-255 and its features are also naturally laid out in 2d space.  
+
+\subsection{Expectation Maximization}
+Expectation Maximization (EM) creates a probabilistic model for each point belonging to a cluster.  As in K Means, a key decision is what is the optimal number of clusters.  I chose to use Bayesian Information Criterion (BIC).  This criterion balances finding the maximum likelihood model given the data with the desire to find the smallest number of clusters.  The sklearn EM model supports different covariance models (spherical, diagonal, tied or full covariance), all of which were tried at different cluster counts.
+
+\begin{figure}[!htb]
+	\centering
+		\begin{subfigure} [b]{.25\textwidth}
+			\centering
+			\includegraphics[width=1.5in, height=1.5in]{figures/Expecation_Maximization_Census_Data.png}
+			\caption{Census}
+			\label{fig:em_census}
+		\end{subfigure}%
+		\begin{subfigure}[b]  {.25\textwidth}
+			\includegraphics[width=1.5in, height=1.5in]{figures/Expecation_Maximization_MNIST_Data.png}
+			\caption{MNIST}
+			\label{fig:em_mnist}
+		\end{subfigure}
+		\caption{Expectation Maximization Review}
+		\label{fig:expectation_maximization}
 \end{figure}
 
- \textbf{Figure \ref{fig:kmeans_census_silhouette}} shows the silhoette score
-  \textbf{Figure \ref{fig:kmeans_census_silhouette_best}} shows the silhoette score
+\textbf{Figure \ref{fig:expectation_maximization}} shows the EM review. Figure \ref{fig:em_census}  shows the EM review for the Census data.  Based on this, Full Covariance with a cluster count of 28 would be chosen.  Figure \ref{fig:em_mnist} shows the MNIST data, where diagonal covariance at a cluster count of 24 would be chosen.   Both of these optimal cluster counts are much higher than the optimal K found for K Means.
 
+\section{Dimensionality Reduction}
+
+\subsection{Principal Component Analysis (PCA)}
 
 \section{References}
 \begin{tabular}{l p{2.75in}}
