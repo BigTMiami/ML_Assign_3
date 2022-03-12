@@ -1,11 +1,13 @@
 from sklearn.cluster import KMeans
 from sklearn import mixture
 from sklearn.decomposition import PCA, FastICA
+from sklearn.random_projection import SparseRandomProjection, GaussianRandomProjection
 from yellowbrick.cluster import SilhouetteVisualizer, KElbowVisualizer
 from matplotlib import pyplot as plt
 from time import time
 from charting import chart_pca_scree, line_chart, clean_string, chart_bic_scores
 import json
+import warnings
 
 SEED = 1
 figure_directory = "Document/Figures/working/"
@@ -86,7 +88,7 @@ def find_EM(dataset_name, X, max_k, start_k=2):
     chart_bic_scores(bic_scores, f"{dataset_name} Data", "Expecation Maximization")
 
     clean_dataset_name = clean_string(dataset_name)
-    variable_name = f"{clean_dataset_name}_silhoette_scores"
+    variable_name = f"{clean_dataset_name}_bic_scores"
     results = {"bic_scores": bic_scores}
     save_results(variable_name, results)
 
@@ -139,15 +141,74 @@ def find_em_from_PCA(dataset_name, train_data, test_data, variance_threshold, ma
     find_EM(reduced_dataset_name, reduced_train_data, max_k)
 
 
-def ICA_review(dataset_name, train_data, max_k):
-    print(f"Finding ICA")
+def ICA_review(dataset_name, train_data, max_k, max_iter, tol, n_components):
+    print(f"Fitting ICA")
     print("================================================")
-    ica = FastICA()
-    reduced_train_data = ica.fit_transform(train_data)
+    ica = FastICA(n_components=n_components, max_iter=max_iter, tol=tol)
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("error")
+        try:
+            ica.fit(train_data)
+        except Warning as e:
+            print(e)
+            print("ERRORED OUT")
+            exit()
+
+    print(f"Fitted in {ica.n_iter_} iterations")
+    print(f"    {ica.n_features_in_} features seen in fitting")
+    print(f"Transforming ICA")
+    print("================================================")
+    reduced_train_data = ica.transform(train_data)
 
     print("Finding K Means on ICA dataset using Silhouette")
     print("================================================")
-    reduced_dataset_name = f"{dataset_name} ICA)"
+    reduced_dataset_name = f"{dataset_name} ICA {n_components} components)"
+    find_K(reduced_dataset_name, reduced_train_data, max_k)
+
+    print("Finding K Means on ICA dataset using Elbow")
+    print("================================================")
+    find_K_elbow(reduced_dataset_name, reduced_train_data, max_k)
+
+    print("Finding EM on ICA dataset")
+    print("================================================")
+    find_EM(reduced_dataset_name, reduced_train_data, max_k)
+
+
+def RPA_review(dataset_name, train_data, max_k, eps, proj_type, n_components):
+    print(f"Fitting RPA")
+    print("================================================")
+    if eps is None:
+        print(f"RPA: Using n_components of {n_components} because eps not set.")
+        kwargs = {"n_components": n_components}
+    else:
+        kwargs = {"eps": eps}
+
+    if proj_type == "sparse":
+        print("Using Sparse")
+        rpa = SparseRandomProjection(**kwargs)
+    elif proj_type == "gaussian":
+        print("Using Gaussian")
+        rpa = GaussianRandomProjection(**kwargs)
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("error")
+        try:
+            rpa.fit(train_data)
+        except Warning as e:
+            print(e)
+            print("ERRORED OUT")
+            exit()
+
+    print(f"Fitted {rpa.n_components_} components")
+
+    print(f"Transforming with RPA")
+    print("================================================")
+    reduced_train_data = rpa.transform(train_data)
+
+    print("Finding K Means on RPA dataset using Silhouette")
+    print("================================================")
+    reduced_dataset_name = f"{dataset_name} RPA Eps:{eps} to {rpa.n_components_} components)"
     find_K(reduced_dataset_name, reduced_train_data, max_k)
 
     print("Finding K Means on ICA dataset using Elbow")
